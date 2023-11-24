@@ -18,6 +18,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include <memory/vaddr.h>
 
 static int is_batch_mode = false;
 
@@ -42,6 +43,78 @@ static char* rl_gets() {
   return line_read;
 }
 
+static word_t dtoh(char c) {
+	switch(c) {
+		case 'a': case 'A':
+			return 10;
+		case 'b': case 'B':
+			return 11;
+		case 'c': case 'C':
+			return 12;
+		case 'd': case 'D':
+			return 13;
+		case 'e': case 'E':
+			return 14;
+		case 'f': case 'F':
+			return 15;
+		default:
+			return (word_t)(c - '0');
+	}
+}
+static word_t ahtoi(const char *str) {
+	int len = strlen(str);
+	word_t res = 0;
+	word_t base = 1;
+	int i = len - 1;
+	while (str[i] != 'x') {
+		res += dtoh(str[i]) * base;
+		base *= 16;
+		i --;
+	}
+	return res;
+}
+static int cmd_x(char *args) {
+	//get the string of N
+	char *n_str = strtok(NULL, " ");
+	//get the number
+	int n = atoi(n_str);
+	//get the string of the start of the memory
+	char *addr_str = args + strlen(n_str) + 1;
+	//get the address
+	word_t addr = ahtoi(addr_str);
+	
+	int i;
+	for (i = 0; i < n; ++i) {
+		word_t content = vaddr_read(addr, 4);
+		addr += 4;
+		printf(FMT_WORD "\n", content);
+	}
+	return 0;
+}
+
+
+static int cmd_p(char *args) {
+	expr(args);
+	return 0;
+}
+
+static int cmd_info(char *args) {
+	if (strcmp(args, "r") == 0) {
+		isa_reg_display();
+	} else if (strcmp(args, "w") == 0) {
+
+	} else {
+
+	}
+	return 0;
+}
+
+static int cmd_si(char *args) {
+	int n = args == NULL ? 1 : atoi(args);
+	cpu_exec(n);
+	return 0;
+}
+
 static int cmd_c(char *args) {
   cpu_exec(-1);
   return 0;
@@ -62,8 +135,11 @@ static struct {
 } cmd_table [] = {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
-  { "q", "Exit NEMU", cmd_q },
-
+  { "q", "Exit NEMU", cmd_q }, 
+  { "si", "Step n instructions, n is the number of the step", cmd_si },
+  { "info", "print the state of the process: r--reg:w--watchpoint", cmd_info },
+  { "x", "examine the content of the memory, 32bits every", cmd_x },
+  { "p", "compute the value of the expression", cmd_p },
   /* TODO: Add more commands */
 
 };
