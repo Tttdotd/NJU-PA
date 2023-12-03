@@ -1,4 +1,4 @@
-/***************************************************************************************
+/***********************************************************************************  *
 * Copyright (c) 2014-2022 Zihao Yu, Nanjing University
 *
 * NEMU is licensed under Mulan PSL v2.
@@ -61,7 +61,7 @@ static word_t dtoh(char c) {
 			return (word_t)(c - '0');
 	}
 }
-static word_t ahtoi(const char *str) {
+word_t ahtoi(const char *str) {
 	int len = strlen(str);
 	word_t res = 0;
 	word_t base = 1;
@@ -73,6 +73,7 @@ static word_t ahtoi(const char *str) {
 	}
 	return res;
 }
+
 static int cmd_x(char *args) {
 	//get the string of N
 	char *n_str = strtok(NULL, " ");
@@ -87,14 +88,30 @@ static int cmd_x(char *args) {
 	for (i = 0; i < n; ++i) {
 		word_t content = vaddr_read(addr, 4);
 		addr += 4;
-		printf(FMT_WORD "\n", content);
+		printf("%s+%d: " FMT_WORD "\n", addr_str, i*4, content);
 	}
 	return 0;
 }
 
+static int cmd_w(char *args) {
+  //create a new watchpoint.
+  new_wp(args);
+  printf("Create a new watchpoint for expr: %s\n", args);
+  return 0;
+}
 
+static int cmd_d(char *args) {
+  char *number_str = strtok(NULL, " ");
+  int number = atoi(number_str);
+  free_wp(number);
+  printf("Delete No.%d watchpoint.\n", number);
+  return 0;
+}
 static int cmd_p(char *args) {
-	expr(args);
+  bool success;
+  uint32_t result = expr(args, &success);
+  assert(success);
+  printf("the value is: %u\n", result);
 	return 0;
 }
 
@@ -102,9 +119,9 @@ static int cmd_info(char *args) {
 	if (strcmp(args, "r") == 0) {
 		isa_reg_display();
 	} else if (strcmp(args, "w") == 0) {
-
+    display_wp();
 	} else {
-
+    panic("Bad option for info!\n");
 	}
 	return 0;
 }
@@ -140,6 +157,8 @@ static struct {
   { "info", "print the state of the process: r--reg:w--watchpoint", cmd_info },
   { "x", "examine the content of the memory, 32bits every", cmd_x },
   { "p", "compute the value of the expression", cmd_p },
+  { "w", "create a watch point for a expression", cmd_w },
+  { "d", "delete No.n watch point", cmd_d },
   /* TODO: Add more commands */
 
 };

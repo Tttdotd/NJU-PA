@@ -18,6 +18,8 @@
 
 #include <common.h>
 
-word_t expr(char *e);
-
+uint32_t expr(char *e, bool *success);
+void new_wp(char *buffer);
+void free_wp(int number);
+void display_wp();
 #endif

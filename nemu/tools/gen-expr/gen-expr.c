@@ -19,10 +19,14 @@
 #include <time.h>
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
+#define NUM_SIZE 11
+#define BUF_MAXSIZE 65536
 // this should be enough
-static char buf[65536] = {};
-static char code_buf[65536 + 128] = {}; // a little larger than `buf`
+static char buf[BUF_MAXSIZE] = {};
+static int len_buf = 0;
+static char code_buf[BUF_MAXSIZE + 128] = {}; // a little larger than `buf`
 static char *code_format =
 "#include <stdio.h>\n"
 "int main() { "
@@ -31,12 +35,52 @@ static char *code_format =
 "  return 0; "
 "}";
 
+static uint32_t choose(uint32_t n) {
+  return rand() % n;
+}
+
+static void gen_num() {
+  uint32_t n = choose(UINT32_MAX);
+
+  //transfer n to a string.
+  char num_buffer[NUM_SIZE+1];
+  sprintf(num_buffer, "%du", n);
+  int len = strlen(num_buffer);
+  //avoid the buf overflow.
+  int delt = BUF_MAXSIZE - len_buf - 1;
+  memcpy(buf + len_buf, num_buffer, delt < len ? delt : len);
+  len_buf += delt < len ? delt : len;
+}
+
+static void gen(char c) {
+  if (len_buf < BUF_MAXSIZE - 1) {
+    buf[len_buf] = c;
+    len_buf ++;
+  }
+}
+
+static void gen_rand_op() {
+  if (len_buf < BUF_MAXSIZE - 1) {
+    switch (choose(4)) {
+      case 0: buf[len_buf] = '+'; break;
+      case 1: buf[len_buf] = '-'; break;
+      case 2: buf[len_buf] = '*'; break;
+      default: buf[len_buf] = '/'; break;
+    }
+    len_buf ++;
+  }
+}
+
 static void gen_rand_expr() {
-  buf[0] = '\0';
+  switch (choose(3)) {
+    case 0: gen_num(); break;
+    case 1: gen('('); gen_rand_expr(); gen(')'); break;
+    default: gen_rand_expr(); gen_rand_op(); gen_rand_expr(); break;
+  }
 }
 
 int main(int argc, char *argv[]) {
-  int seed = time(0);
+  int seed = time(NULL);
   srand(seed);
   int loop = 1;
   if (argc > 1) {
@@ -44,7 +88,9 @@ int main(int argc, char *argv[]) {
   }
   int i;
   for (i = 0; i < loop; i ++) {
+    len_buf = 0;//clear the buf.
     gen_rand_expr();
+    buf[len_buf] = '\0';//add the \0 to the end of the buf.
 
     sprintf(code_buf, code_format, buf);
 
@@ -53,17 +99,20 @@ int main(int argc, char *argv[]) {
     fputs(code_buf, fp);
     fclose(fp);
 
-    int ret = system("gcc /tmp/.code.c -o /tmp/.expr");
+    int ret = system("gcc -w /tmp/.code.c -o /tmp/.expr");//don't warnning the integer overflow.
     if (ret != 0) continue;
 
     fp = popen("/tmp/.expr", "r");
     assert(fp != NULL);
 
-    int result;
+    int result = 0;
     ret = fscanf(fp, "%d", &result);
     pclose(fp);
 
-    printf("%u %s\n", result, buf);
+    //use the value of ret to filte the /0
+    if (ret != -1) {
+      printf("%u %s\n", result, buf);
+    }
   }
   return 0;
 }
