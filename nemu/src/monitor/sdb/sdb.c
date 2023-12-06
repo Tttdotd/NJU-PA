@@ -82,7 +82,9 @@ static int cmd_x(char *args) {
 	//get the string of the start of the memory
 	char *addr_str = args + strlen(n_str) + 1;
 	//get the address
-	word_t addr = ahtoi(addr_str);
+  bool success;
+	word_t addr = expr(addr_str, &success);
+  assert(success);
 	
 	int i;
 	for (i = 0; i < n; ++i) {
