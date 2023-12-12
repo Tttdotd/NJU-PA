@@ -27,6 +27,7 @@ int main(int argc, char *argv[]) {
   am_init_monitor();
 #else
   init_monitor(argc, argv);
+  printf("hehe\n");
 #endif
   /* test cmd_p */
   //test_p();

@@ -110,10 +110,15 @@ static int cmd_d(char *args) {
   return 0;
 }
 static int cmd_p(char *args) {
+  char *base = strtok(NULL, " ");
+  args += strlen(base) + 1;
   bool success;
   uint32_t result = expr(args, &success);
   assert(success);
-  printf("the value is: %u\n", result);
+  if (strcmp(base, "d") == 0)
+    printf("the value is: %u\n", result);
+  else if (strcmp(base, "h") == 0)
+    printf("the value is: 0x%x\n", result);
 	return 0;
 }
 

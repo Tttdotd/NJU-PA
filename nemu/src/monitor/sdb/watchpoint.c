@@ -140,7 +140,7 @@ bool scan_wp() {
     assert(success);
     if (wp_index->watch_oldvalue != watch_newvalue) {
       printf("watchpoint %d: %s\n", n, wp_index->buffer);
-      printf("Old value = %u\nNew value = %u\n", wp_index->watch_oldvalue, watch_newvalue);
+      printf("Old value = %x\nNew value = %x\n", wp_index->watch_oldvalue, watch_newvalue);
       wp_index->watch_oldvalue = watch_newvalue;
       flag = true;
     }
