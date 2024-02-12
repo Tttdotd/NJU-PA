@@ -25,7 +25,9 @@
 #include <macro.h>
 
 #ifdef CONFIG_TARGET_AM
-#include <klib.h>
+//#include <klib.h>
+#include <assert.h>
+#include <stdlib.h>
 #else
 #include <assert.h>
 #include <stdlib.h>

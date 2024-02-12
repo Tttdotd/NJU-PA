@@ -67,6 +67,14 @@ uint64_t get_time();
   } while (0) \
 )
 
+#define log_ftrace_write(...) IFDEF(CONFIG_TARGET_NATIVE_ELF, \
+  do { \
+      extern FILE* log_ftrace_fp; \
+      fprintf(log_ftrace_fp, __VA_ARGS__); \
+      fflush(log_ftrace_fp); \
+  } while (0) \
+)
+
 #define _Log(...) \
   do { \
     printf(__VA_ARGS__); \

@@ -18,6 +18,16 @@
 
 #include <common.h>
 
+#define SIZE_IRINGBUF 16
+typedef struct iringbuf {
+  int front;
+  int length;
+  int tail;
+  char buf[SIZE_IRINGBUF][128];
+} IRingBuf;
+
+void print_iring_buf();
+void add_iring_buf();
 void cpu_exec(uint64_t n);
 
 void set_nemu_state(int state, vaddr_t pc, int halt_ret);

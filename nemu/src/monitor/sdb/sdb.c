@@ -82,9 +82,9 @@ static int cmd_x(char *args) {
 	//get the string of the start of the memory
 	char *addr_str = args + strlen(n_str) + 1;
 	//get the address
-  bool success;
+    bool success;
 	word_t addr = expr(addr_str, &success);
-  assert(success);
+    assert(success);
 	
 	int i;
 	for (i = 0; i < n; ++i) {
@@ -109,27 +109,27 @@ static int cmd_d(char *args) {
   printf("Delete No.%d watchpoint.\n", number);
   return 0;
 }
+
 static int cmd_p(char *args) {
-  char *base = strtok(NULL, " ");
-  args += strlen(base) + 1;
-  bool success;
-  uint32_t result = expr(args, &success);
-  assert(success);
-  if (strcmp(base, "d") == 0)
-    printf("the value is: %u\n", result);
-  else if (strcmp(base, "h") == 0)
-    printf("the value is: 0x%x\n", result);
-	return 0;
+    char *base = strtok(NULL, " ");
+    args += strlen(base) + 1;
+    bool success;
+    uint32_t result = expr(args, &success);
+    assert(success);
+    if (strcmp(base, "d") == 0)
+        printf("the value is: %u\n", result);
+    else if (strcmp(base, "h") == 0)
+        printf("the value is: 0x%x\n", result);
+    return 0;
 }
 
 static int cmd_info(char *args) {
-	if (strcmp(args, "r") == 0) {
+	if (strcmp(args, "r") == 0)
 		isa_reg_display();
-	} else if (strcmp(args, "w") == 0) {
-    display_wp();
-	} else {
-    panic("Bad option for info!\n");
-	}
+	else if (strcmp(args, "w") == 0)
+        display_wp();
+	else
+        panic("Bad option for info!\n");
 	return 0;
 }
 
@@ -157,6 +157,7 @@ static struct {
   const char *description;
   int (*handler) (char *);
 } cmd_table [] = {
+
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q }, 
@@ -166,7 +167,6 @@ static struct {
   { "p", "compute the value of the expression", cmd_p },
   { "w", "create a watch point for a expression", cmd_w },
   { "d", "delete No.n watch point", cmd_d },
-  /* TODO: Add more commands */
 
 };
 

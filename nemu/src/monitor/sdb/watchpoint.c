@@ -21,6 +21,7 @@
 typedef enum {
   WATCH, NORMAL
 } BREAK_TYPE;
+
 typedef struct watchpoint {
   int NO;
   struct watchpoint *next;
@@ -28,8 +29,6 @@ typedef struct watchpoint {
   char buffer[BUFFER_SIZE];
   uint32_t watch_oldvalue;
   uint32_t time_hit;
-  /* TODO: Add more members if necessary */
-
 } WP;
 
 typedef struct watchpointlist {
@@ -56,8 +55,6 @@ void init_wp_pool() {
   list_free.tail = &wp_pool[NR_WP-1];
   list_free.len = NR_WP;
 }
-
-/* TODO: Implement the functionality of watchpoint */
 
 void new_wp(char *info) {
   //put the first point into the head.

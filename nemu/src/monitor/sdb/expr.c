@@ -39,10 +39,6 @@ static struct rule {
   int token_type;
 } rules[] = {
 
-  /* TODO: Add more rules.
-   * Pay attention to the precedence level of different rules.
-   */
-
   {" +", TK_NOTYPE},    // spaces
   {"0x[a-fA-F0-9]+", TK_HDIG},//hex digit
   {"[0-9]+u*", TK_DDIG}, 	// dec digit

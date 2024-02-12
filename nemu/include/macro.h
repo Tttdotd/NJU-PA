@@ -30,6 +30,8 @@
 
 // macro concatenation
 #define concat_temp(x, y) x ## y
+#define _TOSTRING(x) #x
+#define TOSTRING(x) _TOSTRING(x)
 #define concat(x, y) concat_temp(x, y)
 #define concat3(x, y, z) concat(concat(x, y), z)
 #define concat4(x, y, z, w) concat3(concat(x, y), z, w)

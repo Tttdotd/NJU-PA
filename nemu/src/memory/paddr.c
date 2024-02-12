@@ -24,6 +24,13 @@ static uint8_t *pmem = NULL;
 static uint8_t pmem[CONFIG_MSIZE] PG_ALIGN = {};
 #endif
 
+#ifdef CONFIG_MTRACE
+static void memory_trace(paddr_t addr, word_t ret) {
+  log_write("access address = " FMT_PADDR ", the ret is " FMT_WORD "\n", addr, ret);
+}
+#endif
+
+void print_iring_buf();
 uint8_t* guest_to_host(paddr_t paddr) { return pmem + (paddr - CONFIG_MBASE); }
 paddr_t host_to_guest(uint8_t *haddr) { return haddr - pmem + CONFIG_MBASE; }
 
@@ -37,6 +44,8 @@ static void pmem_write(paddr_t addr, int len, word_t data) {
 }
 
 static void out_of_bound(paddr_t addr) {
+  //print the iring buffer
+  print_iring_buf();
   panic("address = " FMT_PADDR " is out of bound of pmem [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,
       addr, PMEM_LEFT, PMEM_RIGHT, cpu.pc);
 }
@@ -57,7 +66,13 @@ void init_mem() {
 }
 
 word_t paddr_read(paddr_t addr, int len) {
-  if (likely(in_pmem(addr))) return pmem_read(addr, len);
+  if (likely(in_pmem(addr))) {
+    word_t ret = pmem_read(addr, len);
+#ifdef CONFIG_MTRACE
+    memory_trace(addr, ret);
+#endif
+    return ret;
+  }
   IFDEF(CONFIG_DEVICE, return mmio_read(addr, len));
   out_of_bound(addr);
   return 0;
