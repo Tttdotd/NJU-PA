@@ -25,8 +25,11 @@ static uint8_t pmem[CONFIG_MSIZE] PG_ALIGN = {};
 #endif
 
 #ifdef CONFIG_MTRACE
-static void memory_trace(paddr_t addr, word_t ret) {
+static void memory_read(paddr_t addr, word_t ret) {
   log_write("access address = " FMT_PADDR ", the ret is " FMT_WORD "\n", addr, ret);
+}
+static void memory_write(paddr_t addr, word_t val) {
+    log_write("write to address = " FMTPADDR ", the val is " FMT_WORD "\n", addr, val);
 }
 #endif
 
@@ -69,7 +72,7 @@ word_t paddr_read(paddr_t addr, int len) {
   if (likely(in_pmem(addr))) {
     word_t ret = pmem_read(addr, len);
 #ifdef CONFIG_MTRACE
-    memory_trace(addr, ret);
+    memory_read(addr, ret);
 #endif
     return ret;
   }
@@ -79,7 +82,10 @@ word_t paddr_read(paddr_t addr, int len) {
 }
 
 void paddr_write(paddr_t addr, int len, word_t data) {
-  if (likely(in_pmem(addr))) { pmem_write(addr, len, data); return; }
-  IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
-  out_of_bound(addr);
+#ifdef CONFIG_MTRACE
+    memory_write(addr, data);
+#endif
+    if (likely(in_pmem(addr))) { pmem_write(addr, len, data); return; }
+    IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
+    out_of_bound(addr);
 }

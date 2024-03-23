@@ -1,13 +1,18 @@
 #include <common.h>
 #include <elf.h>
 
+#define SYMTAB_SIZE 4096
+#define STRTAB_SIZE 4096
+#define SHTAB_SIZE 4096
+#define SHSTRTAB_SIZE 4096
+
 FILE *elf_fp = NULL;
 
 Elf32_Ehdr elf_head;
 
-Elf32_Sym symtab[256];
+Elf32_Sym symtab[SYMTAB_SIZE];
 int sym_num = 0;
-char strtab[1024];
+char strtab[STRTAB_SIZE];
 
 void read_elfHead();
 void read_shTable();
@@ -47,18 +52,22 @@ void read_elfHead() {
 void read_sections() {
     size_t size_sh_table = elf_head.e_shnum * elf_head.e_shentsize;
 
-    Elf32_Shdr sh_table[128];
-    char shstrtab[256];
+    Elf32_Shdr sh_table[SHTAB_SIZE];
+    char shstrtab[SHSTRTAB_SIZE];
 
     //read the section head table
     int n = fseek(elf_fp, (long)elf_head.e_shoff, SEEK_SET);
     assert(n == 0);
+
+    assert(SHTAB_SIZE >= size_sh_table);
     n = fread(sh_table, size_sh_table, 1, elf_fp);
     assert(n == 1);
 
     //read the shstrtab
     n = fseek(elf_fp, (long)sh_table[elf_head.e_shstrndx].sh_offset, SEEK_SET);
     assert(n == 0);
+
+    assert(SHSTRTAB_SIZE >= sh_table[elf_head.e_shstrndx].sh_size);
     n = fread(shstrtab, sh_table[elf_head.e_shstrndx].sh_size, 1, elf_fp);
     assert(n == 1);
 
@@ -67,6 +76,8 @@ void read_sections() {
         if (strcmp(".symtab", shstrtab + sh_table[i].sh_name) == 0) {
             n = fseek(elf_fp, (long)sh_table[i].sh_offset, SEEK_SET);
             assert(n == 0);
+
+            assert(SYMTAB_SIZE >= sh_table[i].sh_size);
             n = fread(symtab, sh_table[i].sh_size, 1, elf_fp);
             assert(n == 1);
             sym_num = sh_table[i].sh_size / sh_table[i].sh_entsize;
@@ -74,6 +85,8 @@ void read_sections() {
         if (strcmp(".strtab", shstrtab + sh_table[i].sh_name) == 0) {
             n = fseek(elf_fp, (long)sh_table[i].sh_offset, SEEK_SET);
             assert(n == 0);
+
+            assert(STRTAB_SIZE >= sh_table[i].sh_size);
             n = fread(strtab, sh_table[i].sh_size, 1, elf_fp);
             assert(n == 1);
         }

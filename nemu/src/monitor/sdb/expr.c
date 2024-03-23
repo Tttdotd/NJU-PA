@@ -21,8 +21,10 @@
  */
 #include <regex.h>
 #define PRIO_MAX 100000
+
 uint32_t eval(int p, int q);
 word_t ahtoi(const char *str);
+
 typedef enum {
   TK_NOTYPE = 256, TK_DDIG, TK_HDIG, TK_DEREF,
   TK_ADD, TK_SUB, TK_MUL, TK_DIV, TK_EQ, TK_NEQ, TK_AND,
@@ -138,8 +140,8 @@ static bool make_token(char *e) {
 uint32_t expr(char *e, bool *success) {
   if (!make_token(e)) {
 	  printf("match failed!\n");
-    *success = false;
-    return -1;
+      *success = false;
+      return -1;
   }
 
   int i;
@@ -230,8 +232,7 @@ static uint32_t dereference(uint32_t address) {
 
 uint32_t eval(int p, int q) {
   if (p > q) {
-    //bad expression.
-    panic("Bad expression!!\n");
+      panic("Bad expression!!\n");
   } else if (p == q) {
     if (tokens[p].type == TK_DDIG) {
       return atoi(tokens[p].str);
@@ -239,6 +240,7 @@ uint32_t eval(int p, int q) {
       return ahtoi(tokens[p].str);
     } else if (tokens[p].type == TK_REG) {
       bool success;
+      //reg->"$.", so we need to send "."(str+1)
       uint32_t result = isa_reg_str2val(tokens[p].str+1, &success);
       assert(success);
       return result;
@@ -249,7 +251,7 @@ uint32_t eval(int p, int q) {
   } else if (check_parenthesis(p, q) == true) {
     return eval(p + 1, q - 1);
   } else {
-    int op_position;//TODO:get the position of the main op.
+    int op_position;
     int op_type;
     find_main_op(p, q, &op_position, &op_type);
     //if the op_position is -1, this expr is a '*<expr>'

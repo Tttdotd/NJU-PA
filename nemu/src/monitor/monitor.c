@@ -17,7 +17,9 @@
 #include <memory/paddr.h>
 
 void init_rand();
+#ifdef CONFIG_IRING
 void init_iring_buf();
+#endif
 void init_log(const char *log_file, const char *log_ftrace_log);
 void init_elf(const char *elf_file);
 void init_mem();
@@ -119,11 +121,15 @@ void init_monitor(int argc, char *argv[]) {
   /* Open the log file. */
   init_log(log_file, log_ftrace_file);
   
+#ifdef CONFIG_FTRACE
   /* input the ELF file. */
   init_elf(elf_file);
+#endif
 
+#ifdef CONFIG_IRING
   /* init iring buffer */
   init_iring_buf();
+#endif
 
   /* Initialize memory. */
   init_mem();

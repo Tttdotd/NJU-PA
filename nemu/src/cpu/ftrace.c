@@ -1,5 +1,7 @@
 #include <common.h>
 #include <elf.h>
+#ifdef CONFIG_FTRACE
+
 
 #define ENTRY_SIZE 1024
 
@@ -23,6 +25,7 @@ static void tab_inc() {
     }
     tab[tab_len] = '\0';
 }
+
 static void tab_dec() {
     for (int i = 0; i < 2; i++) {
         tab_len --;
@@ -57,3 +60,4 @@ void add_ftrace(vaddr_t pc, int type, vaddr_t des_address) {
 
 }
 
+#endif

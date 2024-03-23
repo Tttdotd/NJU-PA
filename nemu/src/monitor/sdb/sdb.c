@@ -233,7 +233,9 @@ void sdb_mainloop() {
       }
     }
 
-    if (i == NR_CMD) { printf("Unknown command '%s'\n", cmd); }
+    if (i == NR_CMD) { 
+        printf("Unknown command '%s'\n", cmd); 
+    }
   }
 }
 
@@ -241,6 +243,8 @@ void init_sdb() {
   /* Compile the regular expressions. */
   init_regex();
 
+#ifdef CONFIG_WATCHPOINT
   /* Initialize the watchpoint pool. */
   init_wp_pool();
+#endif
 }

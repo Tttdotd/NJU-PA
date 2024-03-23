@@ -1,4 +1,5 @@
 #include <cpu/cpu.h>
+#ifdef CONFIG_IRING
 
 IRingBuf iring_buf;
 
@@ -24,3 +25,4 @@ void print_iring_buf() {
       log_write("%s\n", iring_buf.buf[(iring_buf.front + i)%SIZE_IRINGBUF]);
   }
 }
+#endif
