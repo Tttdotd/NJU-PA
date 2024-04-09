@@ -47,24 +47,30 @@ static void invoke_callback(io_callback_t c, paddr_t offset, int len, bool is_wr
 }
 
 void init_map() {
-  io_space = malloc(IO_SPACE_MAX);
-  assert(io_space);
-  p_space = io_space;
+    io_space = malloc(IO_SPACE_MAX);
+    assert(io_space);
+    p_space = io_space;
 }
 
 word_t map_read(paddr_t addr, int len, IOMap *map) {
-  assert(len >= 1 && len <= 8);
-  check_bound(map, addr);
-  paddr_t offset = addr - map->low;
-  invoke_callback(map->callback, offset, len, false); // prepare data to read
-  word_t ret = host_read(map->space + offset, len);
-  return ret;
+    assert(len >= 1 && len <= 8);
+    check_bound(map, addr);
+    paddr_t offset = addr - map->low;
+    invoke_callback(map->callback, offset, len, false); // prepare data to read
+    word_t ret = host_read(map->space + offset, len);
+#ifdef CONFIG_DTRACE
+    log_write("Read the device: %s\n", map->name);
+#endif
+    return ret;
 }
 
 void map_write(paddr_t addr, int len, word_t data, IOMap *map) {
-  assert(len >= 1 && len <= 8);
-  check_bound(map, addr);
-  paddr_t offset = addr - map->low;
-  host_write(map->space + offset, len, data);
-  invoke_callback(map->callback, offset, len, true);
+    assert(len >= 1 && len <= 8);
+    check_bound(map, addr);
+    paddr_t offset = addr - map->low;
+    host_write(map->space + offset, len, data);
+    invoke_callback(map->callback, offset, len, true);
+#ifdef CONFIG_DTRACE
+    log_write("Write the device: %s\n", map->name);
+#endif
 }
