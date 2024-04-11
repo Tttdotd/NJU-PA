@@ -61,11 +61,11 @@ int strncmp(const char *s1, const char *s2, size_t n) {
 }
 
 void *memset(void *s, int c, size_t n) {
-  size_t i;
-  char * str = (char *)s;
-  for (i = 0; i < n; ++i)
-    str[i] = c;
-  return s;
+    const unsigned char uc = c;
+    unsigned char * p;
+    for (p = s; n > 0; ++p, --n)
+        *p = uc;
+    return s;
 }
 
 void *memmove(void *dst, const void *src, size_t n) {

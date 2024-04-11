@@ -19,6 +19,12 @@
     number /= 16; \
 }
 
+#define ISDATETYPECHAR(c) c == 'd' ||\
+                          c == 'u' ||\
+                          c == 'x' ||\
+                          c == 's' ||\
+                          c == 'c'
+
 char dec_to_hex(int num) {
     char res;
     switch(num) {
@@ -40,10 +46,10 @@ char dec_to_hex(int num) {
     return res;
 }
 
-void char_to_string(char *buffer, int c) {
-    buffer[0] = c;
-    buffer[1] = '\0';
-}
+/* void char_to_string(char *buffer, int c) {*/
+/*     buffer[0] = c;*/
+/*     buffer[1] = '\0';*/
+/* }*/
 
 void int_to_string(char *buffer, int number) {
     int count = 0;
@@ -85,67 +91,52 @@ void uint_to_string(char *buffer, unsigned int number, int base) {
     buffer[count] = '\0';
 }
 
-void number_replace(char type, char *modifiers, char *buffer, va_list *arg_list) {
-    char buffer_value[256];
-    if (type == 'd') {
-        int_to_string(buffer_value, va_arg(*arg_list, int));
-    }
-    if (type == 'u') {
-        uint_to_string(buffer_value, va_arg(*arg_list, unsigned int), 10);
-    }
-    if (type == 'x') {
-        uint_to_string(buffer_value, va_arg(*arg_list, unsigned int), 16);
+void parse_placeholder(char *out_buffer, char *in_buffer, va_list *p_arg_list) {
+    int pad_zero = 0, width = 0;
+    char data[256];
+    int i = 0;
+    while (in_buffer[i] != '\0'){
+        if (in_buffer[i] == '0') {
+            pad_zero = 1;
+        } else if (in_buffer[i] >= '1' && in_buffer[i] <= '9') {
+            width = in_buffer[i] - '0';
+        } else {
+            switch (in_buffer[i]) {
+                case 'd':
+                    int_to_string(data, va_arg(*p_arg_list, int));
+                    break;
+                case 'u':
+                    uint_to_string(data, va_arg(*p_arg_list, unsigned int), 10);
+                    break;
+                case 'x':
+                    uint_to_string(data, va_arg(*p_arg_list, unsigned int), 16);
+                    break;
+                case 's':
+                    strcpy(data, va_arg(*p_arg_list, char *));
+                    break;
+                case 'c':
+                    data[0] = va_arg(*p_arg_list, int);
+                    data[1] = '\0';
+                    break;
+                default:
+                    putch(in_buffer[i]);
+                    putch('\n');
+                    panic("Error data type in parse_placeholder()!\n");
+                    break;
+            }
+        }
+        i ++;
     }
 
-    int i_buffer = 0;
-
-    if (modifiers[0] == '\0') {
-        strcpy(buffer, buffer_value);
-    } else if (modifiers[1] == '\0') {
-        int num_blank = modifiers[0] - '0' - strlen(buffer_value);
-        for (int i = 0; i < num_blank; i ++) {
-            buffer[i_buffer] = ' ';
-            i_buffer ++;
-        }
-        strcpy(buffer + i_buffer, buffer_value);
-    } else if (modifiers[2] == '\0') {
-        int num_zero = modifiers[1] - '0' - strlen(buffer_value);
-        for (int i = 0; i < num_zero; i ++) {
-            buffer[i_buffer] = '0';
-            i_buffer ++;
-        }
-        strcpy(buffer + i_buffer, buffer_value);
+    char padchar = ' ';
+    if (pad_zero) {
+        padchar = '0';
     }
-}
 
-void string_replace(char *modifiers, char *buffer, char *string) {
-    char buffer_string[256];
-    strcpy(buffer_string, string);
-    int i_buffer = 0;
-    if (modifiers[0] == '\0') {
-        strcpy(buffer, string);
-    } else if (modifiers[1] == '\0') {
-        int num_blank = modifiers[0] - '0' - strlen(buffer_string);
-        for (int i = 0; i < num_blank; i ++) {
-            buffer[i_buffer] = ' ';
-            i_buffer ++;
-        }
-        strcpy(buffer + i_buffer, buffer_string);
-    }
-}
-
-void char_replace(char *modifiers, char *buffer, char c) {
-    int i_buffer = 0;
-    if (modifiers[0] == '\0') {
-        buffer[i_buffer] = c;
-    } else if (modifiers[1] == '\0') {
-        int num_blank = modifiers[0] - '0' - 1;
-        for (int i = 0; i < num_blank; i ++) {
-            buffer[i_buffer] = '0';
-            i_buffer ++;
-        }
-        buffer[i_buffer] = c;
-    }
+    int datalen = strlen(data);
+    int padlen = width > datalen ? width - datalen : 0;
+    memset(out_buffer, padchar, padlen);
+    strcpy(out_buffer + padlen, data);
 }
 
 int parse_fmt(char *out, const char *fmt, va_list arg_list) {
@@ -153,58 +144,35 @@ int parse_fmt(char *out, const char *fmt, va_list arg_list) {
     int i_out = 0;
 
     for (int i = 0; fmt[i] != '\0'; ++ i) {
-        if (fmt[i] == '%')
+        if (fmt[i] == '%' && is_placeholder == 0) {
             is_placeholder = 1;
-        else if (is_placeholder == 1) {
-            //there are only three cases: %02d %2d %d, so we need to note the length between % and d.
-            //and only d u x have the %02
-            char buffer[256];
-
-            int count = 0;
-            char modifiers[3];
-            while (1) {
-                if (count >= 3 || fmt[i] == '\0')
-                    panic("Bad %... in *printf");
-                if (count == 0 && fmt[i] == '0') {
-                    modifiers[count] = '0';
-                    count ++;
-                }
-                if (fmt[i] - '0' > 0 && fmt[i] - '0' < 10) {
-                    modifiers[count] = fmt[i];
-                    count ++;
-                }
-
-                if (fmt[i] == 'd' || fmt[i] == 'u' || fmt[i] == 'x') {
-                    modifiers[count] = '\0';
-                    number_replace(fmt[i], modifiers, buffer, &arg_list);
-                    strcpy(out + i_out, buffer);
-                    i_out += strlen(buffer);
-                    break;
-                }
-                if (fmt[i] == 's') {
-                    if (count >= 2)
-                        panic("Bad %... in *printf");
-                    modifiers[count] = '\0';
-                    string_replace(modifiers, buffer, va_arg(arg_list, char *));
-                    strcpy(out + i_out, buffer);
-                    i_out += strlen(buffer);
-                    break;
-                }
-                if (fmt[i] == 'c') {
-                    if (count >= 2)
-                        panic("Bad %... in *printf");
-                    modifiers[count] = '\0';
-                    char_replace(modifiers, buffer, va_arg(arg_list, int));
-                    strcpy(out + i_out, buffer);
-                    i_out += strlen(buffer);
-                    break;
-                }
-                i++;
-            }
+        } else if (fmt[i] == '%' && is_placeholder == 1) {
+            out[i_out] = '%';
+            i_out ++;
             is_placeholder = 0;
-        } else {
+        } else if (fmt[i] != '%' && is_placeholder == 0) {
             out[i_out] = fmt[i];
             i_out ++;
+        } else if (fmt[i] != '%' && is_placeholder == 1) {
+            char buffer[256];
+            int i_buffer = 0;
+            while (!(ISDATETYPECHAR(fmt[i]))) {
+                if (fmt[i] == '\0')
+                    panic("The placeholder don't have date type char.");
+                buffer[i_buffer] = fmt[i];
+                i_buffer ++;
+                i ++;
+            }
+            buffer[i_buffer++] = fmt[i];
+            buffer[i_buffer] = '\0';
+
+            char out_buffer[256];
+            parse_placeholder(out_buffer, buffer, &arg_list);
+
+            strcpy(out + i_out, out_buffer);
+            i_out += strlen(out_buffer);
+
+            is_placeholder = 0;
         }
     }
     out[i_out] = '\0';
@@ -212,10 +180,10 @@ int parse_fmt(char *out, const char *fmt, va_list arg_list) {
 }
 
 int vprintf(const char *fmt, va_list arg_list) {
-    char out[1024];
-    int counter = 0;
+    int len_success = 0;
 
-    counter = parse_fmt(out, fmt, arg_list);
+    char out[4096];
+    len_success = parse_fmt(out, fmt, arg_list);
 
     int i = 0;
 
@@ -224,20 +192,20 @@ int vprintf(const char *fmt, va_list arg_list) {
         i ++;
     }
 
-    return counter;
+    return len_success;
 }
 
 int printf(const char *fmt, ...) {
-    int counter = 0;
+    int len_success = 0;
 
     va_list arg_list;
     va_start(arg_list, fmt);
 
-    counter = vprintf(fmt, arg_list);
+    len_success= vprintf(fmt, arg_list);
 
     va_end(arg_list);
 
-    return counter;
+    return len_success;
 }
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
