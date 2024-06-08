@@ -56,8 +56,22 @@ void add_ftrace(vaddr_t pc, int type, vaddr_t des_address) {
             tab_dec();
             log_ftrace_write(RET_FMT"\n", pc, tab, "ret ", name, des_address);
         }
+    } else {
+        panic("Can't find the string of name in address: %u", address);
     }
-
 }
+
+/* typedef struct _stack_tail_call {*/
+/*     vaddr_t funs[128];*/
+/*     int top;*/
+/* } tail_call_t;*/
+
+/* static tail_call_t tc_stack = { .top = 0; };*/
+
+/* void tail_call(vaddr_t pc) {*/
+/*     assert(tc_stack.top < 128);*/
+/*     tc_stack.funs[tc_stack.top] = pc;*/
+/*     tc_stack.top += 1;*/
+/* }*/
 
 #endif

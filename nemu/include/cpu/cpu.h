@@ -35,5 +35,6 @@ void invalid_inst(vaddr_t thispc);
 
 #define NEMUTRAP(thispc, code) set_nemu_state(NEMU_END, thispc, code)
 #define INV(thispc) invalid_inst(thispc)
+#define ECALL(npc) do { bool success = false; npc = isa_raise_intr(isa_reg_str2val("a7", &success), cpu.pc); } while (0);
 
 #endif

@@ -43,17 +43,16 @@ static WPList list_used = {NULL, NULL, 0};
 static WPList list_free = {NULL, NULL, 0};
 
 void init_wp_pool() {
-  int i;
-  for (i = 0; i < NR_WP; i ++) {
-    wp_pool[i].NO = i;
-    wp_pool[i].next = (i == NR_WP - 1 ? NULL : &wp_pool[i + 1]);
-    wp_pool[i].last = (i == 0 ? NULL : &wp_pool[i - 1]);
-    wp_pool[i].time_hit = 0;
+  for (int i = 0; i < NR_WP; i ++) {
+      wp_pool[i].NO = i;
+      wp_pool[i].next = (i == NR_WP - 1 ? NULL : &wp_pool[i + 1]);
+      wp_pool[i].last = (i == 0 ? NULL : &wp_pool[i - 1]);
+      wp_pool[i].time_hit = 0;
   }
 
-  list_free.head = wp_pool;
-  list_free.tail = &wp_pool[NR_WP-1];
-  list_free.len = NR_WP;
+    list_free.head = wp_pool;
+    list_free.tail = &wp_pool[NR_WP-1];
+    list_free.len = NR_WP;
 }
 
 void new_wp(char *info) {

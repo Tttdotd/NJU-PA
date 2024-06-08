@@ -40,32 +40,39 @@ f(30) f(31)
 .align 3
 .globl __am_asm_trap
 __am_asm_trap:
-  addi sp, sp, -CONTEXT_SIZE
+    addi sp, sp, -CONTEXT_SIZE
+  
+    MAP(REGS, PUSH)
+  
+    csrr t0, mcause
+    csrr t1, mstatus
+    csrr t2, mepc
+    
+    addi t3, zero, 0xffffffff
+    beq t0, t3, mepc_plus_four
+    j mepc_plus_four + 4
+    
+mepc_plus_four:
+    addi t2, t2, 0x4
 
-  MAP(REGS, PUSH)
-
-  csrr t0, mcause
-  csrr t1, mstatus
-  csrr t2, mepc
-
-  STORE t0, OFFSET_CAUSE(sp)
-  STORE t1, OFFSET_STATUS(sp)
-  STORE t2, OFFSET_EPC(sp)
-
-  # set mstatus.MPRV to pass difftest
-  li a0, (1 << 17)
-  or t1, t1, a0
-  csrw mstatus, t1
-
-  mv a0, sp
-  jal __am_irq_handle
-
-  LOAD t1, OFFSET_STATUS(sp)
-  LOAD t2, OFFSET_EPC(sp)
-  csrw mstatus, t1
-  csrw mepc, t2
-
-  MAP(REGS, POP)
-
-  addi sp, sp, CONTEXT_SIZE
-  mret
+    STORE t0, OFFSET_CAUSE(sp)
+    STORE t1, OFFSET_STATUS(sp)
+    STORE t2, OFFSET_EPC(sp)
+  
+    # set mstatus.MPRV to pass difftest
+    li a0, (1 << 17)
+    or t1, t1, a0
+    csrw mstatus, t1
+  
+    mv a0, sp
+    jal __am_irq_handle
+  
+    LOAD t1, OFFSET_STATUS(sp)
+    LOAD t2, OFFSET_EPC(sp)
+    csrw mstatus, t1
+    csrw mepc, t2
+  
+    MAP(REGS, POP)
+  
+    addi sp, sp, CONTEXT_SIZE
+    mret

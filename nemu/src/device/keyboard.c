@@ -50,18 +50,18 @@ static int key_queue[KEY_QUEUE_LEN] = {};
 static int key_f = 0, key_r = 0;
 
 static void key_enqueue(uint32_t am_scancode) {
-  key_queue[key_r] = am_scancode;
-  key_r = (key_r + 1) % KEY_QUEUE_LEN;
-  Assert(key_r != key_f, "key queue overflow!");
+    key_queue[key_r] = am_scancode;
+    key_r = (key_r + 1) % KEY_QUEUE_LEN;
+    Assert(key_r != key_f, "key queue overflow!");
 }
 
 static uint32_t key_dequeue() {
-  uint32_t key = NEMU_KEY_NONE;
-  if (key_f != key_r) {
-    key = key_queue[key_f];
-    key_f = (key_f + 1) % KEY_QUEUE_LEN;
-  }
-  return key;
+    uint32_t key = NEMU_KEY_NONE;
+    if (key_f != key_r) {
+        key = key_queue[key_f];
+        key_f = (key_f + 1) % KEY_QUEUE_LEN;
+    }
+    return key;
 }
 
 void send_key(uint8_t scancode, bool is_keydown) {
@@ -83,18 +83,18 @@ static uint32_t key_dequeue() {
 static uint32_t *i8042_data_port_base = NULL;
 
 static void i8042_data_io_handler(uint32_t offset, int len, bool is_write) {
-  assert(!is_write);
-  assert(offset == 0);
-  i8042_data_port_base[0] = key_dequeue();
+    assert(!is_write);
+    assert(offset == 0);
+    i8042_data_port_base[0] = key_dequeue();
 }
 
 void init_i8042() {
-  i8042_data_port_base = (uint32_t *)new_space(4);
-  i8042_data_port_base[0] = NEMU_KEY_NONE;
+    i8042_data_port_base = (uint32_t *)new_space(4);
+    i8042_data_port_base[0] = NEMU_KEY_NONE;
 #ifdef CONFIG_HAS_PORT_IO
-  add_pio_map ("keyboard", CONFIG_I8042_DATA_PORT, i8042_data_port_base, 4, i8042_data_io_handler);
+    add_pio_map ("keyboard", CONFIG_I8042_DATA_PORT, i8042_data_port_base, 4, i8042_data_io_handler);
 #else
-  add_mmio_map("keyboard", CONFIG_I8042_DATA_MMIO, i8042_data_port_base, 4, i8042_data_io_handler);
+    add_mmio_map("keyboard", CONFIG_I8042_DATA_MMIO, i8042_data_port_base, 4, i8042_data_io_handler);
 #endif
-  IFNDEF(CONFIG_TARGET_AM, init_keymap());
+    IFNDEF(CONFIG_TARGET_AM, init_keymap());
 }

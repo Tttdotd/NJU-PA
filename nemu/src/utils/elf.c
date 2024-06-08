@@ -32,8 +32,9 @@ void init_elf(const char *elf_file) {
         read_sections();
         Log("Read the symtab and strtab successfully.");
     }
-    else 
+    else {
         Log("There is no ELF file");
+    }
 }
 
 /* void test_elfread() {*/

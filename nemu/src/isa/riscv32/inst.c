@@ -28,6 +28,7 @@ void add_ftrace(vaddr_t pc, int type, vaddr_t address);
 #define R(i) gpr(i)
 #define Mr vaddr_read
 #define Mw vaddr_write
+#define CSR(i) (cpu.csr[i])
 
 enum {
     TYPE_I, TYPE_U, TYPE_S,
@@ -43,10 +44,11 @@ enum {
 #define immJ() do { *imm = (SEXT(BITS(i, 31, 31), 1) << 20) | (BITS(i, 19, 12) << 12) | (BITS(i, 20, 20) << 11) | (BITS(i, 30, 21) << 1) | 0; } while(0)
 #define immB() do { *imm = (SEXT(BITS(i, 31, 31), 1) << 12) | (BITS(i, 7, 7) << 11) | (BITS(i, 30, 25) << 5) | (BITS(i, 11, 8) << 1) | 0;} while(0)
 
-static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_t *imm, word_t *shamt, int type) {
+static void decode_operand(Decode *s, word_t *rd, word_t *rs1_call_ret, word_t *src1, word_t *src2, word_t *imm, word_t *shamt, int type) {
     uint32_t i = s->isa.inst.val;
-    int rs1 = BITS(i, 19, 15);
-    int rs2 = BITS(i, 24, 20);
+    word_t rs1 = BITS(i, 19, 15);
+    word_t rs2 = BITS(i, 24, 20);
+    *rs1_call_ret = rs1;
     *rd     = BITS(i, 11, 7);
     *shamt  = BITS(i, 24, 20);
     switch (type) {
@@ -60,27 +62,36 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
 }
 
 #ifdef CONFIG_FTRACE
-static void identity_cal_ret(const char *name, Decode *s) {
-    if (strcmp("jal", name) == 0)
-        add_ftrace(s->pc, CALL, s->dnpc);
-    if (strcmp("jalr", name) == 0) {
-        int rs1 = BITS(s->isa.inst.val, 19, 15);
-        if (rs1 == 1)
-            add_ftrace(s->pc, RET, s->dnpc);
-        else
+static void identity_cal_ret(const char *name, Decode *s, int rd, int rs1) {
+    if (strcmp("jal", name) == 0) {
+        if (rd == 1 || rd == 5) {
             add_ftrace(s->pc, CALL, s->dnpc);
+        } 
+        /* else if (rd == 0) {*/
+        /*     tail_call(s->pc);*/
+        /* }*/
+    }
+    if (strcmp("jalr", name) == 0) {
+        if ((rd != 1 && rd != 5) && (rs1 == 1 || rs1 == 5))
+            add_ftrace(s->pc, RET, s->dnpc);
+        else if ((rd == 1 || rd == 5) && (rs1 != 1 && rs1 != 5))
+            add_ftrace(s->pc, CALL, s->dnpc);
+        /* else if ((rd == 0) && (rs1 != 1 && rs1 != 5)) {*/
+        /*     tail_call(s->pc);*/
+        /* }*/
     }
 }
 #endif
 
 static int decode_exec(Decode *s) {
-    int rd = 0;
+    word_t rd = 0;
+    word_t rs1 = 0;
     word_t src1 = 0, src2 = 0, imm = 0, shamt;
     s->dnpc = s->snpc;
 
 #define INSTPAT_INST(s) ((s)->isa.inst.val)
 #define INSTPAT_MATCH(s, name, type, ... /* execute body */ ) { \
-    decode_operand(s, &rd, &src1, &src2, &imm, &shamt, concat(TYPE_, type)); \
+    decode_operand(s, &rd, &rs1, &src1, &src2, &imm, &shamt, concat(TYPE_, type)); \
     __VA_ARGS__ ; \
 }
 
@@ -95,7 +106,11 @@ static int decode_exec(Decode *s) {
     INSTPAT("???????????? ????? 101 ????? 0000011",   lhu    , I, R(rd) = Mr(src1 + imm, 2));
     INSTPAT("???????????? ????? 010 ????? 0000011",   lw     , I, R(rd) = Mr(src1 + imm, 4));
     INSTPAT("???????????? ????? 000 ????? 0010011",   addi   , I, R(rd) = src1 + imm);
-    INSTPAT("???????????? ????? 000 ????? 1100111",   jalr   , I, R(rd) = s->pc + 4; s->dnpc = (src1 + imm) & 0xfffffffe; IFDEF(CONFIG_FTRACE,{identity_cal_ret("jalr", s);}));
+    INSTPAT("???????????? ????? 000 ????? 1100111",   jalr   , I, R(rd) = s->pc + 4; s->dnpc = (src1 + imm) & 0xfffffffe;
+                                                                  IFDEF(CONFIG_FTRACE,
+                                                                      {identity_cal_ret("jalr", s, rd, rs1);}
+                                                                  )
+            );
     INSTPAT("???????????? ????? 011 ????? 0010011",   sltiu  , I, R(rd) = src1 < imm ? 1 : 0);
     INSTPAT("???????????? ????? 010 ????? 0010011",   slti   , I, R(rd) = (sword_t)src1 < (sword_t)imm ? 1 : 0);
     INSTPAT("???????????? ????? 111 ????? 0010011",   andi   , I, R(rd) = src1 & imm);
@@ -120,7 +135,11 @@ static int decode_exec(Decode *s) {
     INSTPAT("0000000 ????? ????? 110 ????? 0110011",  or     , R, R(rd) = src1 | src2);
     INSTPAT("0000000 ????? ????? 111 ????? 0110011",  and    , R, R(rd) = src1 & src2);
 
-    INSTPAT("???????????????????? ????? 1101111",     jal    , J, R(rd) = s->pc + 4; s->dnpc = s->pc + imm;IFDEF(CONFIG_FTRACE, {identity_cal_ret("jal", s);}));
+    INSTPAT("???????????????????? ????? 1101111",     jal    , J, R(rd) = s->pc + 4; s->dnpc = s->pc + imm;
+                                                                  IFDEF(CONFIG_FTRACE, 
+                                                                      {identity_cal_ret("jal", s, rd, rs1);}
+                                                                  )
+            );
 
     INSTPAT("??????? ????? ????? 000 ????? 1100011",  beq    , B, if (src1 == src2) s->dnpc = s->pc + imm);
     INSTPAT("??????? ????? ????? 001 ????? 1100011",  bne    , B, if (src1 != src2) s->dnpc = s->pc + imm);
@@ -130,6 +149,7 @@ static int decode_exec(Decode *s) {
     INSTPAT("??????? ????? ????? 110 ????? 1100011",  bltu   , B, if (src1 < src2) s->dnpc = s->pc + imm);
 
     INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
+    INSTPAT("000000000000 00000 000 00000 1110011",   ecall  , N, ECALL(s->dnpc));
 
     //“M” Standard Extension for Integer Multiplication and Division
     INSTPAT("0000001 ????? ????? 110 ????? 0110011",  rem    , R, R(rd) = (sword_t)src1 % (sword_t)src2);
@@ -139,6 +159,18 @@ static int decode_exec(Decode *s) {
     INSTPAT("0000001 ????? ????? 011 ????? 0110011",  mulhu  , R, R(rd) = (((uint64_t)src1 * ((uint64_t)src2)) >> 32));
     INSTPAT("0000001 ????? ????? 101 ????? 0110011",  divu   , R, R(rd) = src1 / src2);
     INSTPAT("0000001 ????? ????? 100 ????? 0110011",  div    , R, R(rd) = (sword_t)src1 / (sword_t)src2);
+
+    //“Zicsr” Extension
+    INSTPAT("???????????? ????? 001 ????? 1110011",   csrrw  , I, R(rd) = CSR(imm); CSR(imm) = src1);
+    INSTPAT("???????????? ????? 010 ????? 1110011",   csrrs  , I, R(rd) = CSR(imm); CSR(imm) = src1 | CSR(imm));
+    INSTPAT("???????????? ????? 011 ????? 1110011",   csrrc  , I, R(rd) = CSR(imm); CSR(imm) = (~src1) & CSR(imm));
+    INSTPAT("???????????? ????? 101 ????? 1110011",   csrrwi , I, R(rd) = CSR(imm); CSR(imm) = rs1);
+    INSTPAT("???????????? ????? 110 ????? 1110011",   csrrsi , I, R(rd) = CSR(imm); CSR(imm) = rs1 | CSR(imm));
+    INSTPAT("???????????? ????? 111 ????? 1110011",   csrrci , I, R(rd) = CSR(imm); CSR(imm) = (~rs1) | CSR(imm));
+
+    INSTPAT("001100000010 00000 000 00000 1110011",   mret   , N, s->dnpc = CSR(MEPC));
+
+
     INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
     INSTPAT_END();
 

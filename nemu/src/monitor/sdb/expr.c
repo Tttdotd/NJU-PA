@@ -41,18 +41,18 @@ static struct rule {
   int token_type;
 } rules[] = {
 
-  {" +", TK_NOTYPE},    // spaces
-  {"0x[a-fA-F0-9]+", TK_HDIG},//hex digit
-  {"[0-9]+u*", TK_DDIG}, 	// dec digit
-  {"!=", TK_NEQ}, //not equal
-  {"&&", TK_AND}, //logic operator: and
-  {"\\+", TK_ADD},         // plus
-  {"\\-", TK_SUB},			// sub
-  {"\\*", TK_MUL},			// mult
-  {"\\/", TK_DIV}, 		// div
-  {"\\(", '('}, 		// open parenthesis
-  {"\\)", ')'}, 		// close parenthesis
-  {"==", TK_EQ},        // equal
+  {" +", TK_NOTYPE},            // spaces
+  {"0x[a-fA-F0-9]+", TK_HDIG},  // hex digit
+  {"[0-9]+u*", TK_DDIG}, 	    // dec digit
+  {"!=", TK_NEQ},               // not equal
+  {"&&", TK_AND},               // logic operator: and
+  {"\\+", TK_ADD},              // plus
+  {"\\-", TK_SUB},			    // sub
+  {"\\*", TK_MUL},			    // mult
+  {"\\/", TK_DIV}, 		        // div
+  {"\\(", '('}, 		        // open parenthesis
+  {"\\)", ')'}, 		        // close parenthesis
+  {"==", TK_EQ},                // equal
   {"\\$(zero|ra|sp|gp|tp|t[0-6]|s[0-9]|s1[0-1]|a[0-7]|pc)", TK_REG}//register
 
 };
@@ -65,17 +65,17 @@ static regex_t re[NR_REGEX] = {};
  * Therefore we compile them only once before any usage.
  */
 void init_regex() {
-  int i;
-  char error_msg[128];
-  int ret;
-
-  for (i = 0; i < NR_REGEX; i ++) {
-    ret = regcomp(&re[i], rules[i].regex, REG_EXTENDED);
-    if (ret != 0) {
-      regerror(ret, &re[i], error_msg, 128);
-      panic("regex compilation failed: %s\n%s", error_msg, rules[i].regex);
+    int i;
+    char error_msg[128];
+    int ret;
+  
+    for (i = 0; i < NR_REGEX; i ++) {
+        ret = regcomp(&re[i], rules[i].regex, REG_EXTENDED);
+        if (ret != 0) {
+            regerror(ret, &re[i], error_msg, 128);
+            panic("regex compilation failed: %s\n%s", error_msg, rules[i].regex);
+        }
     }
-  }
 }
 
 typedef struct token {

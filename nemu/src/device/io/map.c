@@ -24,12 +24,12 @@ static uint8_t *io_space = NULL;
 static uint8_t *p_space = NULL;
 
 uint8_t* new_space(int size) {
-  uint8_t *p = p_space;
-  // page aligned;
-  size = (size + (PAGE_SIZE - 1)) & ~PAGE_MASK;
-  p_space += size;
-  assert(p_space - io_space < IO_SPACE_MAX);
-  return p;
+    uint8_t *p = p_space;
+    // page aligned;
+    size = (size + (PAGE_SIZE - 1)) & ~PAGE_MASK;
+    p_space += size;
+    assert(p_space - io_space < IO_SPACE_MAX);
+    return p;
 }
 
 static void check_bound(IOMap *map, paddr_t addr) {
@@ -43,7 +43,7 @@ static void check_bound(IOMap *map, paddr_t addr) {
 }
 
 static void invoke_callback(io_callback_t c, paddr_t offset, int len, bool is_write) {
-  if (c != NULL) { c(offset, len, is_write); }
+    if (c != NULL) { c(offset, len, is_write); }
 }
 
 void init_map() {
