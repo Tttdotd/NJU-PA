@@ -23,7 +23,10 @@
                           c == 'u' ||\
                           c == 'x' ||\
                           c == 's' ||\
-                          c == 'c'
+                          c == 'c' ||\
+                          c == 'p'
+
+#define MAX_OUT_SIZE 4096
 
 char dec_to_hex(int num) {
     char res;
@@ -76,7 +79,7 @@ void int_to_string(char *buffer, int number) {
 }
 
 void uint_to_string(char *buffer, unsigned int number, int base) {
-    char buffer_reverse[256];
+    char buffer_reverse[MAX_OUT_SIZE];
     int count = 0;
   
     if (base == 10)
@@ -84,16 +87,22 @@ void uint_to_string(char *buffer, unsigned int number, int base) {
     if (base == 16)
         TRANSFORM_16();
   
-    int i;
-    for (i = 0; i < count; ++i) {
+    int i = 0;
+    if (base == 16) {
+        buffer[0] = '0';
+        buffer[1] = 'x';
+        i += 2;
+    }
+    while (i < count) {
         buffer[i] = buffer_reverse[count - 1 - i];
+        i ++;
     }
     buffer[count] = '\0';
 }
 
 void parse_placeholder(char *out_buffer, char *in_buffer, va_list *p_arg_list) {
     int pad_zero = 0, width = 0;
-    char data[256];
+    char data[MAX_OUT_SIZE];
     int i = 0;
     while (in_buffer[i] != '\0'){
         if (in_buffer[i] == '0') {
@@ -101,12 +110,16 @@ void parse_placeholder(char *out_buffer, char *in_buffer, va_list *p_arg_list) {
         } else if (in_buffer[i] >= '1' && in_buffer[i] <= '9') {
             width = in_buffer[i] - '0';
         } else {
+            putch('\0');
             switch (in_buffer[i]) {
                 case 'd':
                     int_to_string(data, va_arg(*p_arg_list, int));
                     break;
                 case 'u':
                     uint_to_string(data, va_arg(*p_arg_list, unsigned int), 10);
+                    break;
+                case 'p':
+                    uint_to_string(data, va_arg(*p_arg_list, unsigned int), 16);
                     break;
                 case 'x':
                     uint_to_string(data, va_arg(*p_arg_list, unsigned int), 16);
@@ -146,14 +159,17 @@ int parse_fmt(char *out, const char *fmt, va_list arg_list) {
     for (int i = 0; fmt[i] != '\0'; ++ i) {
         if (fmt[i] == '%' && is_placeholder == 0) {
             is_placeholder = 1;
-        } else if (fmt[i] == '%' && is_placeholder == 1) {
+        } 
+        else if (fmt[i] == '%' && is_placeholder == 1) {
             out[i_out] = '%';
             i_out ++;
             is_placeholder = 0;
-        } else if (fmt[i] != '%' && is_placeholder == 0) {
+        } 
+        else if (fmt[i] != '%' && is_placeholder == 0) {
             out[i_out] = fmt[i];
             i_out ++;
-        } else if (fmt[i] != '%' && is_placeholder == 1) {
+        } 
+        else if (fmt[i] != '%' && is_placeholder == 1) {
             char buffer[256];
             int i_buffer = 0;
             while (!(ISDATETYPECHAR(fmt[i]))) {
@@ -166,7 +182,7 @@ int parse_fmt(char *out, const char *fmt, va_list arg_list) {
             buffer[i_buffer++] = fmt[i];
             buffer[i_buffer] = '\0';
 
-            char out_buffer[256];
+            char out_buffer[MAX_OUT_SIZE];
             parse_placeholder(out_buffer, buffer, &arg_list);
 
             strcpy(out + i_out, out_buffer);
@@ -182,7 +198,7 @@ int parse_fmt(char *out, const char *fmt, va_list arg_list) {
 int vprintf(const char *fmt, va_list arg_list) {
     int len_success = 0;
 
-    char out[4096];
+    char out[MAX_OUT_SIZE];
     len_success = parse_fmt(out, fmt, arg_list);
 
     int i = 0;
