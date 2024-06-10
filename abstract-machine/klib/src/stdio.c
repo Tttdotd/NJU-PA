@@ -82,20 +82,23 @@ void uint_to_string(char *buffer, unsigned int number, int base) {
     char buffer_reverse[MAX_OUT_SIZE];
     int count = 0;
   
-    if (base == 10)
+    if (base == 10) {
         TRANSFORM_10();
-    if (base == 16)
-        TRANSFORM_16();
-  
-    int i = 0;
+    }
     if (base == 16) {
+        TRANSFORM_16();
         buffer[0] = '0';
         buffer[1] = 'x';
-        i += 2;
     }
+
+    int i = 0;
+    int i_forward = 0;
+    int i_backward = count - 1;
     while (i < count) {
-        buffer[i] = buffer_reverse[count - 1 - i];
+        buffer[i_forward] = buffer_reverse[i_backward];
         i ++;
+        i_forward ++;
+        i_backward --;
     }
     buffer[count] = '\0';
 }

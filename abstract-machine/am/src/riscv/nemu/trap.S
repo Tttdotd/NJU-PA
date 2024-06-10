@@ -50,6 +50,16 @@ __am_asm_trap:
     
     addi t3, zero, 0xffffffff
     beq t0, t3, mepc_plus_four
+
+    addi t3, zero, 0x1
+    beq t0, t3, mepc_plus_four
+
+    addi t3, zero, 0x4
+    beq t0, t3, mepc_plus_four
+
+    addi t3, zero, 0x9
+    beq t0, t3, mepc_plus_four
+
     j mepc_plus_four + 4
     
 mepc_plus_four:

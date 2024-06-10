@@ -184,4 +184,7 @@ $(RAMDISK): fsimg
 
 ramdisk: $(RAMDISK)
 
+cp: app
+	cp ./build/$(notdir $(shell pwd))-$(ISA) ~/ysyx-workbench/nanos-lite/build/ramdisk.img
+
 .PHONY: fsimg ramdisk

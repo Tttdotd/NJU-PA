@@ -6,6 +6,15 @@
 #include <stdbool.h>
 #include ARCH_H // this macro is defined in $CFLAGS
                 // examples: "arch/x86-qemu.h", "arch/native.h", ...
+#if defined(__ISA_AM_NATIVE__)
+# define EXPECT_TYPE EM_X86_64
+#elif defined(__ISA_X86__)
+# define EXPECT_TYPE EM_X86_64
+#elif defined(__ISA_MIPS32__)
+# define EXPECT_TYPE EM_MIPS_X
+#elif defined(__riscv)
+# define EXPECT_TYPE EM_RISCV
+#endif
 
 // Memory protection flags
 #define MMAP_NONE  0x00000000 // no access
