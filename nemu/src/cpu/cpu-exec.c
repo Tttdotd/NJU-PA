@@ -38,7 +38,8 @@ void add_iring_buf(char *src);
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
-    if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
+    //if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
+    if (1) { log_write("%s\n", _this->logbuf); }
 #endif
     if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
     IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
@@ -73,7 +74,7 @@ static void exec_once(Decode *s, vaddr_t pc) {
     p += space_len;
 
     //add this info into the iringbuf
-    add_iring_buf(p);
+    //add_iring_buf(p);
 
 #ifndef CONFIG_ISA_loongarch32r
     void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);

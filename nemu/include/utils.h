@@ -68,12 +68,28 @@ uint64_t get_time();
 )
 
 #define log_ftrace_write(...) IFDEF(CONFIG_TARGET_NATIVE_ELF, \
-  do { \
-      extern FILE* log_ftrace_fp; \
-      fprintf(log_ftrace_fp, __VA_ARGS__); \
-      fflush(log_ftrace_fp); \
-  } while (0) \
-)
+    do { \
+        extern FILE* log_ftrace_fp; \
+        fprintf(log_ftrace_fp, __VA_ARGS__); \
+        fflush(log_ftrace_fp); \
+    } while (0) \
+    )
+
+#define log_mtrace_write(...) IFDEF(CONFIG_TARGET_NATIVE_ELF, \
+        do { \
+            extern FILE *log_mtrace_fp; \
+            fprintf(log_mtrace_fp, __VA_ARGS__); \
+            fflush(log_mtrace_fp); \
+        } while (0) \
+        )
+
+#define log_dtrace_write(...) IFDEF(CONFIG_TARGET_NATIVE_ELF, \
+        do { \
+            extern FILE *log_dtrace_fp; \
+            fprintf(log_dtrace_fp, __VA_ARGS__); \
+            fflush(log_dtrace_fp); \
+        } while (0) \
+        )
 
 #define _Log(...) \
   do { \

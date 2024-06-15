@@ -36,9 +36,13 @@ static debug_module_config_t difftest_dm_config = {
   .support_impebreak = true
 };
 
+enum CSR {
+    MTVEC = 0x305, MSTATUS = 0x300, MEPC = 0x341, MCAUSE = 0x342
+};
 struct diff_context_t {
   word_t gpr[MUXDEF(CONFIG_RVE, 16, 32)];
   word_t pc;
+  word_t csr[4096];
 };
 
 static sim_t* s = NULL;
@@ -60,6 +64,10 @@ void sim_t::diff_get_regs(void* diff_context) {
     ctx->gpr[i] = state->XPR[i];
   }
   ctx->pc = state->pc;
+  ctx->csr[MTVEC] = state->mtvec.get()->read();
+  ctx->csr[MSTATUS] = state->mstatus.get()->read();
+  ctx->csr[MEPC] = state->mepc.get()->read();
+  ctx->csr[MCAUSE] = state->mcause.get()->read();
 }
 
 void sim_t::diff_set_regs(void* diff_context) {
@@ -68,6 +76,10 @@ void sim_t::diff_set_regs(void* diff_context) {
     state->XPR.write(i, (sword_t)ctx->gpr[i]);
   }
   state->pc = ctx->pc;
+  state->mtvec->write(ctx->csr[MTVEC]);
+  state->mstatus->write(ctx->csr[MSTATUS]);
+  state->mepc->write(ctx->csr[MEPC]);
+  state->mcause->write(ctx->csr[MCAUSE]);
 }
 
 void sim_t::diff_memcpy(reg_t dest, void* src, size_t n) {

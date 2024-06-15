@@ -22,11 +22,25 @@ extern CPU_state cpu;
 bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
     assert(ref_r != NULL);
 
-    if (cpu.pc != ref_r->pc)
+    if (cpu.pc != ref_r->pc) {
         return false;
-    for (int i = 0; i < MUXDEF(CONFIG_RVE, 16, 32); i++)
-        if (cpu.gpr[i] != ref_r->gpr[i])
+    }
+    for (int i = 0; i < MUXDEF(CONFIG_RVE, 16, 32); i++) {
+        if (cpu.gpr[i] != ref_r->gpr[i]) {
+            printf("x%d: ref->%u, dut->%u\n", i, ref_r->gpr[i], cpu.gpr[i]);
             return false;
+        }
+    }
+    
+    if (cpu.csr[MTVEC] != ref_r->csr[MTVEC] ||
+        /*cpu.csr[MSTATUS] != ref_r->csr[MSTATUS] ||*/
+        cpu.csr[MEPC] != ref_r->csr[MEPC]
+        /* cpu.csr[MCAUSE] != ref_r->csr[MCAUSE]*/
+        ) {
+        printf("ref: mtvec:%u mstatus:%u mepc:%u mcause:%u\n", ref_r->csr[MTVEC], ref_r->csr[MSTATUS], ref_r->csr[MEPC], ref_r->csr[MCAUSE]);
+        printf("dut: mtvec:%u mstatus:%u mepc:%u mcause:%u\n", cpu.csr[MTVEC], cpu.csr[MSTATUS], cpu.csr[MEPC], cpu.csr[MCAUSE]);
+        return false;
+    }
     return true;
 }
 

@@ -56,33 +56,34 @@ void init_wp_pool() {
 }
 
 void new_wp(char *info) {
-  //put the first point into the head.
-  word_t size_info = strlen(info) + 1;
-  assert(size_info <= BUFFER_SIZE);
-  if (list_free.head == NULL) {
-    printf("No more watch point.\n");
-    return;
-  }
-  memcpy(list_free.head->buffer, info, size_info);
-  assert(list_free.head->buffer[size_info-1] == '\0');
-  bool success;
-  list_free.head->watch_oldvalue = expr(list_free.head->buffer, &success);
-  assert(success);
-  WP *wp_index = list_free.head;
-  list_free.head = list_free.head->next;
-  if (list_used.head == NULL) {
-    list_used.head = wp_index;
-    list_used.head->next = NULL;
-    list_used.tail = wp_index;
-  } else {
-    assert(wp_index != NULL);
-    list_used.tail->next = wp_index;
-    list_used.tail = list_used.tail->next;
-    list_used.tail->next = NULL;
-  }
-  
-  list_used.len ++;
-  list_free.len --;
+    //put the first point into the head.
+    word_t size_info = strlen(info) + 1;
+    assert(size_info <= BUFFER_SIZE);
+    if (list_free.head == NULL) {
+        printf("No more watch point.\n");
+        return;
+    }
+    memcpy(list_free.head->buffer, info, size_info);
+    assert(list_free.head->buffer[size_info-1] == '\0');
+    bool success;
+    list_free.head->watch_oldvalue = expr(list_free.head->buffer, &success);
+    assert(success);
+    WP *wp_index = list_free.head;
+    list_free.head = list_free.head->next;
+    if (list_used.head == NULL) {
+        list_used.head = wp_index;
+        list_used.head->next = NULL;
+        list_used.tail = wp_index;
+    } 
+    else {
+        assert(wp_index != NULL);
+        list_used.tail->next = wp_index;
+        list_used.tail = list_used.tail->next;
+        list_used.tail->next = NULL;
+    }
+    
+    list_used.len ++;
+    list_free.len --;
 }
 
 void free_wp(int number) {

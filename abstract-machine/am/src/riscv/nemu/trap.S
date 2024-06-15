@@ -13,7 +13,7 @@
 #endif
 
 #define REGS_LO16(f) \
-      f( 1)       f( 3) f( 4) f( 5) f( 6) f( 7) f( 8) f( 9) \
+f( 0) f( 1) f( 2) f( 3) f( 4) f( 5) f( 6) f( 7) f( 8) f( 9) \
 f(10) f(11) f(12) f(13) f(14) f(15)
 #ifndef __riscv_e
 #define REGS_HI16(f) \
@@ -37,6 +37,17 @@ f(30) f(31)
 #define OFFSET_STATUS ((NR_REGS + 1) * XLEN)
 #define OFFSET_EPC    ((NR_REGS + 2) * XLEN)
 
+#define SYS_exit 0
+#define SYS_yield 1
+#define SYS_open 2
+#define SYS_read 3
+#define SYS_write 4
+#define SYS_close 7
+#define SYS_lseek 8
+#define SYS_brk 9
+
+
+
 .align 3
 .globl __am_asm_trap
 __am_asm_trap:
@@ -51,13 +62,29 @@ __am_asm_trap:
     addi t3, zero, 0xffffffff
     beq t0, t3, mepc_plus_four
 
-    addi t3, zero, 0x1
+
+    addi t3, zero, SYS_exit
     beq t0, t3, mepc_plus_four
 
-    addi t3, zero, 0x4
+    addi t3, zero, SYS_yield
     beq t0, t3, mepc_plus_four
 
-    addi t3, zero, 0x9
+    addi t3, zero, SYS_open
+    beq t0, t3, mepc_plus_four
+
+    addi t3, zero, SYS_read
+    beq t0, t3, mepc_plus_four
+
+    addi t3, zero, SYS_write
+    beq t0, t3, mepc_plus_four
+
+    addi t3, zero, SYS_close
+    beq t0, t3, mepc_plus_four
+
+    addi t3, zero, SYS_lseek
+    beq t0, t3, mepc_plus_four
+
+    addi t3, zero, SYS_brk
     beq t0, t3, mepc_plus_four
 
     j mepc_plus_four + 4

@@ -31,17 +31,19 @@ void isa_reg_display() {
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
-  assert(s != NULL);
-  word_t result = 0;
-  if (strcmp(s, "pc") == 0)
-    return cpu.pc;
-  int i;
-  for (i = 0; i < 32; ++i) {
-    if (strcmp(s, regs[i]) == 0) {
-      result = gpr(i);
-      break;
+    assert(s != NULL);
+    word_t result = 0;
+    if (strcmp(s, "pc") == 0) {
+        *success = true;
+        return cpu.pc;
     }
-  }
-  *success = i == 32 ? false : true;
-  return result;
+    int i;
+    for (i = 0; i < 32; ++i) {
+        if (strcmp(s, regs[i]) == 0) {
+            result = gpr(i);
+            break;
+        }
+    }
+    *success = i == 32 ? false : true;
+    return result;
 }

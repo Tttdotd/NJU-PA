@@ -34,7 +34,11 @@ Context* __am_irq_handle(Context *c) {
                 ev.event = EVENT_YIELD; break;
             case SYS_exit:
             case SYS_yield:
+            case SYS_open:
+            case SYS_read:
             case SYS_write:
+            case SYS_close:
+            case SYS_lseek:
             case SYS_brk:
                 ev.event = EVENT_SYSCALL; break;
             default: 
@@ -57,6 +61,7 @@ bool cte_init(Context*(*handler)(Event, Context*)) {
   
     // register event handler
     user_handler = handler;
+    //printf("cte_init user_handler: %p\n", user_handler);
   
     return true;
 }

@@ -56,7 +56,7 @@ void add_ftrace(vaddr_t pc, int type, vaddr_t des_address) {
             tab_dec();
             log_ftrace_write(RET_FMT"\n", pc, tab, "ret ", name, des_address);
         }
-    } else {
+    } else if (address < 0x83000000) {
         panic("Can't find the string of name in address: %u", address);
     }
 }

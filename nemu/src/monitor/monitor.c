@@ -20,7 +20,7 @@ void init_rand();
 #ifdef CONFIG_IRING
 void init_iring_buf();
 #endif
-void init_log(const char *log_file, const char *log_ftrace_log);
+void init_log(const char *log_file, const char *log_ftrace_log, const char *log_mtrace_log, const char *log_dtrace_log);
 void init_elf(const char *elf_file);
 void init_mem();
 void init_difftest(char *ref_so_file, long img_size, int port);
@@ -46,6 +46,8 @@ void sdb_set_batch_mode();
 
 static char *log_file = NULL;
 static char *log_ftrace_file = NULL;
+static char *log_mtrace_file = NULL;
+static char *log_dtrace_file = NULL;
 static char *elf_file = NULL;
 static char *diff_so_file = NULL;
 static char *img_file = NULL;
@@ -78,6 +80,8 @@ static int parse_args(int argc, char *argv[]) {
         {"batch"    , no_argument      , NULL, 'b'},
         {"log"      , required_argument, NULL, 'l'},
         {"ftlog"    , required_argument, NULL, 'f'},
+        {"mtlog"    , required_argument, NULL, 'm'},
+        {"dtlog"    , required_argument, NULL, 'a'},
         {"elf"      , required_argument, NULL, 'e'},
         {"diff"     , required_argument, NULL, 'd'},
         {"port"     , required_argument, NULL, 'p'},
@@ -85,7 +89,7 @@ static int parse_args(int argc, char *argv[]) {
         {0          , 0                , NULL,  0 },
     };
     int o;
-    while ((o = getopt_long(argc, argv, "-bhl:d:p:e:f:", table, NULL)) != -1) {
+    while ((o = getopt_long(argc, argv, "-bhl:d:p:e:f:m:a:", table, NULL)) != -1) {
         switch (o) {
             case 'b': sdb_set_batch_mode(); break;
             case 'p': sscanf(optarg, "%d", &difftest_port); break;
@@ -93,6 +97,8 @@ static int parse_args(int argc, char *argv[]) {
             case 'e': elf_file = optarg; break;
             case 'd': diff_so_file = optarg; break;
             case 'f': log_ftrace_file = optarg; break;
+            case 'm': log_mtrace_file = optarg; break;
+            case 'a': log_dtrace_file = optarg; break;
             case 1: img_file = optarg; return 0;
             default:
                 printf("Usage: %s [OPTION...] IMAGE [args]\n\n", argv[0]);
@@ -119,7 +125,7 @@ void init_monitor(int argc, char *argv[]) {
   init_rand();
 
   /* Open the log file. */
-  init_log(log_file, log_ftrace_file);
+  init_log(log_file, log_ftrace_file, log_mtrace_file, log_dtrace_file);
   
 #ifdef CONFIG_FTRACE
   /* input the ELF file. */

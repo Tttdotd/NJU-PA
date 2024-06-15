@@ -52,14 +52,25 @@ void init_map() {
     p_space = io_space;
 }
 
+#ifdef CONFIG_DTRACE
+static void log_device_read(const char *name) {
+    log_dtrace_write("0x%x: read the device: %s\n", cpu.pc, name);
+}
+
+static void log_device_write(const char *name) {
+    log_dtrace_write("0x%x: write the device: %s\n", cpu.pc, name);
+}
+#endif
+
 word_t map_read(paddr_t addr, int len, IOMap *map) {
     assert(len >= 1 && len <= 8);
+    //panic("address = %u", addr);
     check_bound(map, addr);
     paddr_t offset = addr - map->low;
     invoke_callback(map->callback, offset, len, false); // prepare data to read
     word_t ret = host_read(map->space + offset, len);
 #ifdef CONFIG_DTRACE
-    log_write("Read the device: %s\n", map->name);
+    log_device_read(map->name);
 #endif
     return ret;
 }
@@ -71,6 +82,6 @@ void map_write(paddr_t addr, int len, word_t data, IOMap *map) {
     host_write(map->space + offset, len, data);
     invoke_callback(map->callback, offset, len, true);
 #ifdef CONFIG_DTRACE
-    log_write("Write the device: %s\n", map->name);
+    log_device_write(map->name);
 #endif
 }

@@ -19,7 +19,7 @@
     number /= 16; \
 }
 
-#define ISDATETYPECHAR(c) c == 'd' ||\
+#define ISDATATYPECHAR(c) c == 'd' ||\
                           c == 'u' ||\
                           c == 'x' ||\
                           c == 's' ||\
@@ -79,26 +79,30 @@ void int_to_string(char *buffer, int number) {
 }
 
 void uint_to_string(char *buffer, unsigned int number, int base) {
-    char buffer_reverse[MAX_OUT_SIZE];
     int count = 0;
-  
-    if (base == 10) {
-        TRANSFORM_10();
-    }
-    if (base == 16) {
-        TRANSFORM_16();
+    if (number == 0) {
         buffer[0] = '0';
-        buffer[1] = 'x';
+        count ++;
     }
-
-    int i = 0;
-    int i_forward = 0;
-    int i_backward = count - 1;
-    while (i < count) {
-        buffer[i_forward] = buffer_reverse[i_backward];
-        i ++;
-        i_forward ++;
-        i_backward --;
+    else {
+        char buffer_reverse[MAX_OUT_SIZE];
+      
+        int i_forward = 0;
+        if (base == 10) {
+            TRANSFORM_10();
+        }
+        else if (base == 16) {
+            TRANSFORM_16();
+            buffer_reverse[count ++] = 'x';
+            buffer_reverse[count ++] = '0';
+        }
+    
+        int i_backward = count - 1;
+        for (int i = 0; i < count; i ++) {
+            buffer[i_forward] = buffer_reverse[i_backward];
+            i_forward ++;
+            i_backward --;
+        }
     }
     buffer[count] = '\0';
 }
@@ -113,7 +117,7 @@ void parse_placeholder(char *out_buffer, char *in_buffer, va_list *p_arg_list) {
         } else if (in_buffer[i] >= '1' && in_buffer[i] <= '9') {
             width = in_buffer[i] - '0';
         } else {
-            putch('\0');
+            //putch('\0');
             switch (in_buffer[i]) {
                 case 'd':
                     int_to_string(data, va_arg(*p_arg_list, int));
@@ -127,9 +131,15 @@ void parse_placeholder(char *out_buffer, char *in_buffer, va_list *p_arg_list) {
                 case 'x':
                     uint_to_string(data, va_arg(*p_arg_list, unsigned int), 16);
                     break;
-                case 's':
-                    strcpy(data, va_arg(*p_arg_list, char *));
+                case 's': 
+                {
+                    char *str = va_arg(*p_arg_list, char*);
+                    /* putstr("AM parse_placeholder string: ");*/
+                    /* putstr(str);*/
+                    /* putch('\n');*/
+                    strcpy(data, str);
                     break;
+                }
                 case 'c':
                     data[0] = va_arg(*p_arg_list, int);
                     data[1] = '\0';
@@ -175,7 +185,7 @@ int parse_fmt(char *out, const char *fmt, va_list arg_list) {
         else if (fmt[i] != '%' && is_placeholder == 1) {
             char buffer[256];
             int i_buffer = 0;
-            while (!(ISDATETYPECHAR(fmt[i]))) {
+            while (!(ISDATATYPECHAR(fmt[i]))) {
                 if (fmt[i] == '\0')
                     panic("The placeholder don't have date type char.");
                 buffer[i_buffer] = fmt[i];
@@ -234,12 +244,14 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
 
 int sprintf(char *out, const char *fmt, ...) {
   int len_success = 0;
+
   va_list arg_list;
   va_start(arg_list, fmt);
 
   len_success = vsprintf(out, fmt, arg_list);
 
   va_end(arg_list);
+
   return len_success;
 }
 
